@@ -73,21 +73,21 @@ Footer {
   
 }
 
-/* Titre principal */
+
 .item-display h2 {
   font-size: 1.5rem;
   color: #0078d4;
   margin: 0;
 }
 
-/* Texte général */
+
 .item-display p {
   font-size: 1rem;
   color: white;
   margin: 0;
 }
 
-/* Style du bouton */
+
 button {
   background-color: #0078d4;
   color: white;
