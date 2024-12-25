@@ -8,7 +8,7 @@
 - S'assurer que le projet fonctionne correctement
   > Vous pouvez reprendre des fonctionnalités intéressantes dans chacun de vos projets
 
-#test branch1
+#test 2
 
 ## Renseigner les membres du groupe
 - Ajouter un fichier CONTRIBUTORS.md à la racine du dossier, puis y ajouter une section Contributors dans laquelle vous spécifierez le nom des membres du groupe.
