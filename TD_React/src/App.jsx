@@ -30,7 +30,7 @@ function ShowData({ data, menuItem }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({});
-  const [dataState, setDataState] = useState(data); // Gérer les données dynamiquement
+  const [dataState, setDataState] = useState(data); 
   const [isEditing, setIsEditing] = useState(false);
   const [editIndex, setEditIndex] = useState(null);
 
@@ -49,7 +49,7 @@ function ShowData({ data, menuItem }) {
     Matières: [{ name: "course", label: "Nom du Cours" }],
   };
 
-  // Filtrage des données en fonction du menu sélectionné
+  
   let filteredData;
   switch (menuItem) {
     case "Notes":
@@ -82,7 +82,6 @@ function ShowData({ data, menuItem }) {
     );
   }
 
-  // Pagination
   const handleChangePage = (event, newPage) => setPage(newPage);
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
@@ -94,7 +93,7 @@ function ShowData({ data, menuItem }) {
     page * rowsPerPage + rowsPerPage
   );
 
-  // Gestion du formulaire
+ 
   const handleOpenForm = (data, index = null) => {
     setFormData(data || {});
     setIsEditing(index !== null);
@@ -111,11 +110,11 @@ function ShowData({ data, menuItem }) {
   const handleSave = () => {
     let newDataState;
     if (isEditing) {
-      // Modifier une entrée existante
+      
       newDataState = [...dataState];
       newDataState[editIndex] = createDataObject();
     } else {
-      // Ajouter une nouvelle entrée
+      
       newDataState = [...dataState, createDataObject()];
     }
     setDataState(newDataState);
