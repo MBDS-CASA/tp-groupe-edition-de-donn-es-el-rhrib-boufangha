@@ -1,8 +1,9 @@
-import { useState } from 'react';
 import university from './assets/azurelogo.png';
 import './App.css';
-import data from './../../data.json';
-import ShowData from './ShowData';
+import HamburgerMenu from './HamburgerMenu';
+import { useState } from 'react';
+import { Scripts } from 'react-router';
+import AppRoute from './Routes';
 
 
 
@@ -42,60 +43,15 @@ function MainContent({jour, mois, annee, heure, minute, seconde}) {
 }
 
 
-function HamburgerMenu({ menuItems, onSelect, ...props }) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [activeItem, setActiveItem] = useState(menuItems[0]);
-  
-
-  const toggleMenu = () => {
-    setMenuOpen(!menuOpen);
-  };
-  
-
-  const handleItemClick = (item) => {
-    setActiveItem(item);
-    onSelect(item);
-    setMenuOpen(false); 
-  };
-
-  return (
-    <div className="hamburger-menu" {...props}>
-      
-      <div className="hamburger-icon" onClick={toggleMenu}>
-        <div></div>
-        <div></div>
-        <div></div>
-      </div>
-      
-      
-      {menuOpen && (
-        <ul className="menu-list">
-          {menuItems.map((item) => (
-            <li
-              key={item}
-              onClick={() => handleItemClick(item)}
-              className={`menu-item ${item === activeItem ? "active" : ""}`} 
-            >
-              {item}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
 function App() {
   const [currentPage, setCurrentPage] = useState("Notes");
+  const menuItems = ["Notes", "Etudiants", "Matières", "A propos"];
 
-  const handleMenuSelect = (item) => {
-    setCurrentPage(item);
-  };
+  const handleMenuSelect = (item) => setCurrentPage(item);
+
   return (
     <>
-      <HamburgerMenu
-        menuItems={["Notes", "Etudiants", "Matières", "A propos"] }
-        onSelect={handleMenuSelect}
-      />
+      <HamburgerMenu menuItems={menuItems} onSelect={handleMenuSelect} />
       <main>
         <p>Vous êtes dans la page : {currentPage}</p>
       </main>
@@ -110,10 +66,15 @@ function App() {
         
         <MainContent jour='Lundi' mois='Decembre' annee='2024' heure='16' minute='30' seconde='00' />
       </div>
-      <ShowData data={data} menuItem={currentPage} />
+       <Scripts>
+        <AppRoute/>
+      </Scripts>  
+      
+      
       <Footer annee='2024' nom='EL RHRIB' prenom='Oussama'/>
     </>
   );
 }
+
 
 export default App;

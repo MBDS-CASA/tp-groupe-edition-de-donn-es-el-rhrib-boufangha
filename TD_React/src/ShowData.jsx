@@ -1,6 +1,4 @@
-import { useState } from 'react';
-import './App.css';
-import { saveAs } from "file-saver";
+import React, { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -8,9 +6,9 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
   TablePagination,
   TextField,
+  Paper,
   Button,
   Dialog,
   DialogActions,
@@ -18,19 +16,50 @@ import {
   DialogTitle,
   IconButton,
 } from "@mui/material";
-import { Delete, Edit } from "@mui/icons-material";
+import { Edit, Delete } from "@mui/icons-material";
+import { saveAs } from "file-saver";
 
-
-
-function ShowData({ data, menuItem }) {
+function ShowData({ menuItem }) {
+  const [dataState, setDataState] = useState([]);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [searchQuery, setSearchQuery] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({});
-  const [dataState, setDataState] = useState(data); 
   const [isEditing, setIsEditing] = useState(false);
   const [editIndex, setEditIndex] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const API_ENDPOINTS = {
+    Notes: "http://localhost:8010/api/grades",
+    Etudiants: "http://localhost:8010/api/students",
+    Matières: "http://localhost:8010/api/courses",
+  };
+
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+
+    const fetchData = async () => {
+      try {
+        const response = await fetch(API_ENDPOINTS[menuItem]);
+        if (!response.ok) {
+          throw new Error(`Error fetching data: ${response.status}`);
+        }
+        const data = await response.json();
+        setDataState(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (API_ENDPOINTS[menuItem]) {
+      fetchData();
+    }
+  }, [menuItem]);
 
   const formFields = {
     Notes: [
@@ -47,30 +76,29 @@ function ShowData({ data, menuItem }) {
     Matières: [{ name: "course", label: "Nom du Cours" }],
   };
 
-  
-  let filteredData;
-  switch (menuItem) {
-    case "Notes":
-      filteredData = dataState.map(({ course, student, grade, date }) => ({
-        course,
-        student: `${student.firstname} ${student.lastname}`,
-        grade,
-        date,
-      }));
-      break;
-    case "Etudiants":
-      filteredData = dataState.map(({ student }) => ({
-        firstname: student.firstname,
-        lastname: student.lastname,
-        id: student.id,
-      }));
-      break;
-    case "Matières":
-      filteredData = dataState.map(({ course }) => ({ course }));
-      break;
-    default:
-      filteredData = [];
-  }
+  const handleDataMapping = () => {
+    switch (menuItem) {
+      case "Notes":
+        return dataState.map(({ course, student, grade, date }) => ({
+          course,
+          student: `${student.firstname} ${student.lastname}`,
+          grade,
+          date,
+        }));
+      case "Etudiants":
+        return dataState.map(({ firstname, lastname, id }) => ({
+          firstname,
+          lastname,
+          id,
+        }));
+      case "Matières":
+        return dataState.map(({ course }) => ({ course }));
+      default:
+        return [];
+    }
+  };
+
+  let filteredData = handleDataMapping();
 
   if (searchQuery) {
     filteredData = filteredData.filter((row) =>
@@ -80,8 +108,8 @@ function ShowData({ data, menuItem }) {
     );
   }
 
-  const handleChangePage = (event, newPage) => setPage(newPage);
-  const handleChangeRowsPerPage = (event) => {
+  const handlePageChange = (event, newPage) => setPage(newPage);
+  const handleRowsPerPageChange = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
@@ -91,14 +119,14 @@ function ShowData({ data, menuItem }) {
     page * rowsPerPage + rowsPerPage
   );
 
- 
-  const handleOpenForm = (data, index = null) => {
-    setFormData(data || {});
+  const handleFormOpen = (data = {}, index = null) => {
+    setFormData(data);
     setIsEditing(index !== null);
     setEditIndex(index);
     setShowForm(true);
   };
-  const handleCloseForm = () => setShowForm(false);
+
+  const handleFormClose = () => setShowForm(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -108,33 +136,18 @@ function ShowData({ data, menuItem }) {
   const handleSave = () => {
     let newDataState;
     if (isEditing) {
-      
       newDataState = [...dataState];
-      newDataState[editIndex] = createDataObject();
+      newDataState[editIndex] = formData;
     } else {
-      
-      newDataState = [...dataState, createDataObject()];
+      newDataState = [...dataState, formData];
     }
     setDataState(newDataState);
-    handleCloseForm();
+    handleFormClose();
   };
 
   const handleDelete = (index) => {
     const newDataState = dataState.filter((_, i) => i !== index);
     setDataState(newDataState);
-  };
-
-  const calculateStatistics = () => {
-    if (menuItem === "Notes") {
-      const grades = dataState.map((item) => parseFloat(item.grade));
-      const average = grades.reduce((sum, grade) => sum + grade, 0) / grades.length;
-      const studentsCount = [...new Set(dataState.map((item) => item.student))].length;
-      return {
-        averageGrade: average.toFixed(2),
-        totalStudents: studentsCount,
-      };
-    }
-    return {};
   };
 
   const exportToCSV = () => {
@@ -154,51 +167,24 @@ function ShowData({ data, menuItem }) {
     saveAs(blob, `${menuItem}-data.csv`);
   };
 
-  const createDataObject = () => {
-    switch (menuItem) {
-      case "Notes":
-        const [firstname, lastname] = formData.student.split(" ");
-        return {
-          course: formData.course,
-          student: { firstname, lastname },
-          grade: formData.grade,
-          date: formData.date,
-        };
-      case "Etudiants":
-        return {
-          student: {
-            firstname: formData.firstname,
-            lastname: formData.lastname,
-            id: formData.id,
-          },
-        };
-      case "Matières":
-        return { course: formData.course };
-      default:
-        return {};
-    }
-  };
-  const statistics = calculateStatistics();
+  if (loading) return <p>Chargement des données...</p>;
+  if (error) return <p>Erreur : {error}</p>;
+
   return (
     <div>
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={() => handleOpenForm()}
-        style={{ marginBottom: "16px" }}
-      >
+      <Button variant="contained" color="primary" onClick={() => handleFormOpen()}>
         Ajouter {menuItem.toLowerCase()}
       </Button>
       <Button
         variant="contained"
         color="secondary"
         onClick={exportToCSV}
-        style={{ marginBottom: "16px", marginLeft: "16px" }}
+        style={{ marginLeft: "16px" }}
       >
         Exporter en CSV
       </Button>
 
-      <Dialog open={showForm} onClose={handleCloseForm}>
+      <Dialog open={showForm} onClose={handleFormClose}>
         <DialogTitle>
           {isEditing ? "Modifier" : "Ajouter"} {menuItem.toLowerCase()}
         </DialogTitle>
@@ -216,7 +202,7 @@ function ShowData({ data, menuItem }) {
           ))}
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseForm} color="secondary">
+          <Button onClick={handleFormClose} color="secondary">
             Annuler
           </Button>
           <Button onClick={handleSave} color="primary">
@@ -255,7 +241,7 @@ function ShowData({ data, menuItem }) {
                 ))}
                 <TableCell>
                   <IconButton
-                    onClick={() => handleOpenForm(dataState[index], index)}
+                    onClick={() => handleFormOpen(dataState[index], index)}
                   >
                     <Edit />
                   </IconButton>
@@ -267,24 +253,17 @@ function ShowData({ data, menuItem }) {
             ))}
           </TableBody>
         </Table>
-        <TablePagination
-          component="div"
-          count={filteredData.length}
-          page={page}
-          onPageChange={handleChangePage}
-          rowsPerPage={rowsPerPage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
       </TableContainer>
-      {menuItem === "Notes" && (
-        <div style={{ marginTop: "20px" }}>
-          <h3>Statistiques :</h3>
-          <p>Note moyenne : {statistics.averageGrade}</p>
-          <p>Nombre total d'étudiants : {statistics.totalStudents}</p>
-        </div>
-      )}
+      <TablePagination
+        component="div"
+        count={filteredData.length}
+        page={page}
+        onPageChange={handlePageChange}
+        rowsPerPage={rowsPerPage}
+        onRowsPerPageChange={handleRowsPerPageChange}
+      />
     </div>
   );
 }
 
-  export default ShowData;
+export default ShowData;
