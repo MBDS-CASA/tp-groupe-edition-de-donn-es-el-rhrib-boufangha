@@ -1,19 +1,6 @@
 import university from './assets/azurelogo.png';
 import './App.css';
-import HamburgerMenu from './HamburgerMenu';
-import { useState } from 'react';
-import { Scripts } from 'react-router';
 import AppRoute from './Routes';
-import ShowData from './ShowData';
-
-
-
-
-
-
-
-
-
 
 
 function Header({ title1, title2, logo }) {
@@ -46,29 +33,18 @@ function MainContent({jour, mois, annee, heure, minute, seconde}) {
 
 
 function App() {
-  const [currentPage, setCurrentPage] = useState("Notes");
-  const menuItems = ["Notes", "Etudiants", "Matières", "A propos"];
-
-  const handleMenuSelect = (item) => setCurrentPage(item);
-
+  
   return (
     <>
-      <HamburgerMenu menuItems={menuItems} onSelect={handleMenuSelect} />
-
+       <AppRoute />
       <div>
         <Header
           title1="Introduction à React"
           title2="A la découverte des premières notions de React"
           logo={university}
         />
-        
-        
         <MainContent jour='Lundi' mois='Decembre' annee='2024' heure='16' minute='30' seconde='00' />
       </div>
-      <AppRoute />
-      
-      
-      
       <Footer annee='2024' nom='EL RHRIB' prenom='Oussama'/>
     </>
   );

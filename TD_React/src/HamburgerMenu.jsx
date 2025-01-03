@@ -1,14 +1,10 @@
 import { useState } from 'react';
+import { Link } from 'react-router';
 
-function HamburgerMenu({ menuItems, onSelect }) {
+function HamburgerMenu({ menuItems }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const toggleMenu = () => setMenuOpen(!menuOpen);
-
-  const handleItemClick = (item) => {
-    onSelect(item);
-    setMenuOpen(false);
-  };
 
   return (
     <div className="hamburger-menu">
@@ -20,8 +16,8 @@ function HamburgerMenu({ menuItems, onSelect }) {
       {menuOpen && (
         <ul className="menu-list">
           {menuItems.map((item) => (
-            <li key={item} onClick={() => handleItemClick(item)}>
-              {item}
+            <li key={item.path} onClick={() => setMenuOpen(false)}>
+              <Link to={item.path}>{item.text}</Link>
             </li>
           ))}
         </ul>
@@ -29,4 +25,5 @@ function HamburgerMenu({ menuItems, onSelect }) {
     </div>
   );
 }
+
 export default HamburgerMenu;

@@ -1,14 +1,20 @@
 import { Route, Routes } from "react-router";
 import ShowData from "./ShowData";
 import { BrowserRouter as Router } from "react-router";
-// import { useParams } from "react-router";
-// import data from "./../../data.json";
+import HamburgerMenu from "./HamburgerMenu";
 
 
 
 function AppRoute() {
+  const menuItems = [
+    { text: 'Étudiants', path: '/etudiants' },
+    { text: 'Notes', path: '/notes' },
+    { text: 'Matières', path: '/matieres' },
+    { text: 'À propos', path: '/apropos' },
+  ];
   return (
     <Router>
+      <HamburgerMenu menuItems={menuItems} />
     <Routes>
       <Route path="/etudiants" element={<ShowData menuItem="Etudiants" />} />
       <Route path="/notes" element={<ShowData menuItem="Notes" />} />
