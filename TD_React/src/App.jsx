@@ -4,6 +4,7 @@ import HamburgerMenu from './HamburgerMenu';
 import { useState } from 'react';
 import { Scripts } from 'react-router';
 import AppRoute from './Routes';
+import ShowData from './ShowData';
 
 
 
@@ -66,9 +67,11 @@ function App() {
         
         <MainContent jour='Lundi' mois='Decembre' annee='2024' heure='16' minute='30' seconde='00' />
       </div>
-       <Scripts>
+       {/* <Scripts>
         <AppRoute/>
-      </Scripts>  
+      </Scripts>  */}
+      <ShowData menuItem={currentPage} />
+      
       
       
       <Footer annee='2024' nom='EL RHRIB' prenom='Oussama'/>

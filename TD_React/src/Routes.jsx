@@ -1,5 +1,5 @@
 import { Route, Routes } from "react-router";
-import ShowData from "./App.jsx";
+import ShowData from "./ShowData";
 // import { useParams } from "react-router";
 // import data from "./../../data.json";
 

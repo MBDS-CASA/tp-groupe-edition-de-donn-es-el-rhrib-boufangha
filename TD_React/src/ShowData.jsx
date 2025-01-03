@@ -17,7 +17,6 @@ import {
   IconButton,
 } from "@mui/material";
 import { Edit, Delete } from "@mui/icons-material";
-import { saveAs } from "file-saver";
 
 function ShowData({ menuItem }) {
   const [dataState, setDataState] = useState([]);
@@ -31,21 +30,24 @@ function ShowData({ menuItem }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const API_ENDPOINTS = {
-    Notes: "http://localhost:8010/api/grades",
-    Etudiants: "http://localhost:8010/api/students",
-    Matières: "http://localhost:8010/api/courses",
+  const API_BASE_URL = "http://localhost:8010/api";
+
+  const endpoints = {
+    Etudiants: `${API_BASE_URL}/students`,
+    Matières: `${API_BASE_URL}/courses`,
+    Notes: `${API_BASE_URL}/grades`,
   };
 
   useEffect(() => {
+    if (!menuItem) return;
     setLoading(true);
     setError(null);
 
     const fetchData = async () => {
       try {
-        const response = await fetch(API_ENDPOINTS[menuItem]);
+        const response = await fetch(endpoints[menuItem]);
         if (!response.ok) {
-          throw new Error(`Error fetching data: ${response.status}`);
+          throw new Error(`Error fetching ${menuItem}: ${response.status}`);
         }
         const data = await response.json();
         setDataState(data);
@@ -56,68 +58,8 @@ function ShowData({ menuItem }) {
       }
     };
 
-    if (API_ENDPOINTS[menuItem]) {
-      fetchData();
-    }
+    fetchData();
   }, [menuItem]);
-
-  const formFields = {
-    Notes: [
-      { name: "course", label: "Cours" },
-      { name: "student", label: "Étudiant (Nom Prénom)" },
-      { name: "grade", label: "Note" },
-      { name: "date", label: "Date" },
-    ],
-    Etudiants: [
-      { name: "firstname", label: "Prénom" },
-      { name: "lastname", label: "Nom" },
-      { name: "id", label: "ID Étudiant" },
-    ],
-    Matières: [{ name: "course", label: "Nom du Cours" }],
-  };
-
-  const handleDataMapping = () => {
-    switch (menuItem) {
-      case "Notes":
-        return dataState.map(({ course, student, grade, date }) => ({
-          course,
-          student: `${student.firstname} ${student.lastname}`,
-          grade,
-          date,
-        }));
-      case "Etudiants":
-        return dataState.map(({ firstname, lastname, id }) => ({
-          firstname,
-          lastname,
-          id,
-        }));
-      case "Matières":
-        return dataState.map(({ course }) => ({ course }));
-      default:
-        return [];
-    }
-  };
-
-  let filteredData = handleDataMapping();
-
-  if (searchQuery) {
-    filteredData = filteredData.filter((row) =>
-      Object.values(row).some((value) =>
-        value.toString().toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    );
-  }
-
-  const handlePageChange = (event, newPage) => setPage(newPage);
-  const handleRowsPerPageChange = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
-
-  const paginatedData = filteredData.slice(
-    page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage
-  );
 
   const handleFormOpen = (data = {}, index = null) => {
     setFormData(data);
@@ -133,55 +75,79 @@ function ShowData({ menuItem }) {
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleSave = () => {
-    let newDataState;
-    if (isEditing) {
-      newDataState = [...dataState];
-      newDataState[editIndex] = formData;
-    } else {
-      newDataState = [...dataState, formData];
+  const handleSave = async () => {
+    const endpoint = endpoints[menuItem];
+    const method = isEditing ? "PUT" : "POST";
+    const url = isEditing ? `${endpoint}/${dataState[editIndex].id}` : endpoint;
+
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to save ${menuItem}: ${response.statusText}`);
+      }
+
+      const updatedData = isEditing
+        ? dataState.map((item, idx) =>
+            idx === editIndex ? { ...item, ...formData } : item
+          )
+        : [...dataState, formData];
+
+      setDataState(updatedData);
+      handleFormClose();
+    } catch (err) {
+      alert(`Error: ${err.message}`);
     }
-    setDataState(newDataState);
-    handleFormClose();
   };
 
-  const handleDelete = (index) => {
-    const newDataState = dataState.filter((_, i) => i !== index);
-    setDataState(newDataState);
+  const handleDelete = async (index) => {
+    const endpoint = `${endpoints[menuItem]}/${dataState[index].id}`;
+    try {
+      const response = await fetch(endpoint, { method: "DELETE" });
+      if (!response.ok) {
+        throw new Error(`Failed to delete ${menuItem}: ${response.statusText}`);
+      }
+
+      setDataState(dataState.filter((_, idx) => idx !== index));
+    } catch (err) {
+      alert(`Error: ${err.message}`);
+    }
   };
 
-  const exportToCSV = () => {
-    const csvContent =
-      Object.keys(dataState[0] || {})
-        .join(",") +
-      "\n" +
-      dataState
-        .map((row) =>
-          Object.values(row)
-            .map((value) => (typeof value === "object" ? JSON.stringify(value) : value))
-            .join(",")
-        )
-        .join("\n");
-
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    saveAs(blob, `${menuItem}-data.csv`);
+  const handleChangePage = (event, newPage) => setPage(newPage);
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
   };
 
-  if (loading) return <p>Chargement des données...</p>;
-  if (error) return <p>Erreur : {error}</p>;
+  const filteredData = dataState.filter((item) =>
+    Object.values(item)
+      .join(" ")
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase())
+  );
+
+  const paginatedData = filteredData.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
+  );
+
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p>Error: {error}</p>;
 
   return (
     <div>
-      <Button variant="contained" color="primary" onClick={() => handleFormOpen()}>
-        Ajouter {menuItem.toLowerCase()}
-      </Button>
       <Button
         variant="contained"
-        color="secondary"
-        onClick={exportToCSV}
-        style={{ marginLeft: "16px" }}
+        color="primary"
+        onClick={() => handleFormOpen()}
+        style={{ marginBottom: "16px" }}
       >
-        Exporter en CSV
+        Ajouter {menuItem.toLowerCase()}
       </Button>
 
       <Dialog open={showForm} onClose={handleFormClose}>
@@ -189,14 +155,14 @@ function ShowData({ menuItem }) {
           {isEditing ? "Modifier" : "Ajouter"} {menuItem.toLowerCase()}
         </DialogTitle>
         <DialogContent>
-          {formFields[menuItem]?.map((field) => (
+          {Object.keys(formData).map((key) => (
             <TextField
-              key={field.name}
+              key={key}
               margin="dense"
-              name={field.name}
-              label={field.label}
+              name={key}
+              label={key}
               fullWidth
-              value={formData[field.name] || ""}
+              value={formData[key] || ""}
               onChange={handleInputChange}
             />
           ))}
@@ -218,17 +184,14 @@ function ShowData({ menuItem }) {
         margin="normal"
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
-        sx={{
-          backgroundColor: "white",
-        }}
       />
 
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
             <TableRow>
-              {Object.keys(filteredData[0] || {}).map((key, index) => (
-                <TableCell key={index}>{key}</TableCell>
+              {Object.keys(dataState[0] || {}).map((key, idx) => (
+                <TableCell key={idx}>{key}</TableCell>
               ))}
               <TableCell>Actions</TableCell>
             </TableRow>
@@ -241,11 +204,15 @@ function ShowData({ menuItem }) {
                 ))}
                 <TableCell>
                   <IconButton
-                    onClick={() => handleFormOpen(dataState[index], index)}
+                    onClick={() => handleFormOpen(row, index)}
+                    color="primary"
                   >
                     <Edit />
                   </IconButton>
-                  <IconButton onClick={() => handleDelete(index)}>
+                  <IconButton
+                    onClick={() => handleDelete(index)}
+                    color="secondary"
+                  >
                     <Delete />
                   </IconButton>
                 </TableCell>
@@ -253,15 +220,15 @@ function ShowData({ menuItem }) {
             ))}
           </TableBody>
         </Table>
+        <TablePagination
+          component="div"
+          count={filteredData.length}
+          page={page}
+          onPageChange={handleChangePage}
+          rowsPerPage={rowsPerPage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+        />
       </TableContainer>
-      <TablePagination
-        component="div"
-        count={filteredData.length}
-        page={page}
-        onPageChange={handlePageChange}
-        rowsPerPage={rowsPerPage}
-        onRowsPerPageChange={handleRowsPerPageChange}
-      />
     </div>
   );
 }
