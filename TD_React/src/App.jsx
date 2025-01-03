@@ -15,6 +15,7 @@ import ShowData from './ShowData';
 
 
 
+
 function Header({ title1, title2, logo }) {
   return (
     <header>
@@ -53,9 +54,6 @@ function App() {
   return (
     <>
       <HamburgerMenu menuItems={menuItems} onSelect={handleMenuSelect} />
-      <main>
-        <p>Vous êtes dans la page : {currentPage}</p>
-      </main>
 
       <div>
         <Header
@@ -67,10 +65,8 @@ function App() {
         
         <MainContent jour='Lundi' mois='Decembre' annee='2024' heure='16' minute='30' seconde='00' />
       </div>
-       {/* <Scripts>
-        <AppRoute/>
-      </Scripts>  */}
-      <ShowData menuItem={currentPage} />
+      <AppRoute />
+      {/* <ShowData menuItem={currentPage} />  */}
       
       
       
