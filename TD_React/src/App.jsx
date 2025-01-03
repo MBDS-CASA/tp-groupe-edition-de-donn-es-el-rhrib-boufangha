@@ -66,7 +66,6 @@ function App() {
         <MainContent jour='Lundi' mois='Decembre' annee='2024' heure='16' minute='30' seconde='00' />
       </div>
       <AppRoute />
-      {/* <ShowData menuItem={currentPage} />  */}
       
       
       
